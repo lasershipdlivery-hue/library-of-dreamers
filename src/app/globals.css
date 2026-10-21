@@ -1,0 +1,11 @@
+@import "tailwindcss";
+:root {
+  --navy: #0A1931;
+  --cream: #FFFEF7;
+  --gold: #D4AF37;
+}
+body {
+  background: var(--cream);
+  color: var(--navy);
+  font-family: 'Inter', sans-serif;
+}
