@@ -1,47 +1,67 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase'
+import Link from 'next/link'
+
+type Dream = {
+  id: string
+  title: string
+  category: string
+  story: string
+  dreamer_name: string
+  funding_goal: number
+  is_public: boolean
+  created_at: string
+}
+
 export default function Home() {
+  const [dreams, setDreams] = useState<Dream[]>([])
+  const [filter, setFilter] = useState('All')
+  const supabase = createClient()
+
+  useEffect(() => { fetchDreams() }, [])
+  async function fetchDreams() {
+    const { data } = await supabase.from('dreams').select('*').eq('is_public', true).order('created_at', { ascending: false })
+    if (data) setDreams(data)
+  }
+
+  const categories = ['All', 'Education', 'Business', 'Health', 'Tech', 'Art', 'Agriculture']
+  const filtered = filter === 'All' ? dreams : dreams.filter(d => d.category === filter)
+
   return (
-    <main className="min-h-screen">
-      {/* NAV */}
-      <nav className="flex justify-between items-center px-8 py-6 border-b">
-        <h1 className="text-2xl font-black tracking-tighter">LIBRARY OF DREAMERS</h1>
-        <div className="flex gap-4">
-          <a href="/dreams" className="px-4 py-2">Explore Dreams</a>
-          <a href="/login" className="px-6 py-2 bg-[#0A1931] text-white rounded-full">Write Your Dream</a>
+    <div className="min-h-screen bg-[#FFFEF7] text-[#0A1931]">
+      <nav className="flex justify-between items-center p-6 max-w-6xl mx-auto border-b">
+        <h1 className="text-2xl font-black">LIBRARY OF DREAMERS</h1>
+        <div className="flex gap-3">
+          <Link href="/login" className="px-5 py-2 border rounded-full font-bold text-sm">Login</Link>
+          <Link href="/register" className="px-5 py-2 bg-[#0A1931] text-white rounded-full font-bold text-sm">Share Dream</Link>
         </div>
       </nav>
-
-      {/* HERO */}
-      <section className="px-8 py-24 text-center max-w-5xl mx-auto">
-        <p className="text-[#D4AF37] tracking-[0.3em] text-sm mb-4">EST. 2026 • ABUJA, NIGERIA</p>
-        <h2 className="text-7xl font-serif leading-[0.9] mb-6">
-          Every Dream<br/>
-          <span className="italic font-light">Deserves a</span><br/>
-          Library.
-        </h2>
-        <p className="text-xl opacity-70 max-w-2xl mx-auto mb-10">
-          A home for Nigerian dreamers to write, publish, and get supported. No likes. No algorithm. Just stories that matter.
-        </p>
-        <div className="flex justify-center gap-4">
-          <a href="/dreams" className="px-8 py-4 bg-[#0A1931] text-white rounded-full text-lg">Enter The Library →</a>
-          <a href="/submit" className="px-8 py-4 border border-[#0A1931] rounded-full text-lg">Submit a Dream</a>
+      <div className="max-w-6xl mx-auto px-6 py-12 text-center">
+        <h2 className="text-5xl font-black leading-tight">Every Dream <br/> Deserves a Shelf</h2>
+        <p className="text-zinc-600 mt-4">Click any dream to read & fund. Owners control privacy.</p>
+        <div className="flex justify-center gap-2 mt-6 flex-wrap">
+          {categories.map(cat => (
+            <button key={cat} onClick={()=>setFilter(cat)} className={`px-4 py-2 rounded-full text-sm font-bold border ${filter===cat ? 'bg-[#0A1931] text-white' : 'bg-white'}`}>{cat}</button>
+          ))}
         </div>
-      </section>
-
-      {/* STATS */}
-      <section className="grid grid-cols-3 border-y text-center">
-        <div className="py-12 border-r">
-          <p className="text-5xl font-serif">1,200+</p>
-          <p className="opacity-60">Dreams Published</p>
-        </div>
-        <div className="py-12 border-r">
-          <p className="text-5xl font-serif">₦4.2M</p>
-          <p className="opacity-60">Supporter Contributions</p>
-        </div>
-        <div className="py-12">
-          <p className="text-5xl font-serif">All 36</p>
-          <p className="opacity-60">States Represented</p>
-        </div>
-      </section>
-    </main>
+      </div>
+      <div className="max-w-6xl mx-auto px-6 pb-20 grid md:grid-cols-3 gap-6">
+        {filtered.map(dream => (
+          <Link key={dream.id} href={`/dream/${dream.id}`} className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-lg transition block">
+            <div className="flex justify-between mb-3">
+              <span className="text-xs px-3 py-1 bg-[#FFFEF7] border rounded-full font-bold">{dream.category}</span>
+              <span className="text-xs">🌍 Public</span>
+            </div>
+            <h3 className="font-bold text-lg">{dream.title}</h3>
+            <p className="text-sm text-zinc-600 mt-2 line-clamp-3">{dream.story}</p>
+            <div className="mt-4 pt-4 border-t flex justify-between">
+              <span className="text-sm font-bold">By {dream.dreamer_name}</span>
+              {dream.funding_goal > 0 && <span className="text-sm font-black text-green-600">₦{dream.funding_goal.toLocaleString()}</span>}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
